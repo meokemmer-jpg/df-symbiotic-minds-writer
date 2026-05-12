@@ -1,0 +1,95 @@
+df_id: df-symbiotic-minds-writer
+df_name: Buecher-Trilogie-Symbiotic-Minds
+welle_introduced: welle-44
+type: foundation-df
+crux-mk: true
+k0_touch: false
+q0_touch: false
+phronesis_required: false
+
+# K11 Cascade-Containment
+cascade_isolation: hard
+failure_blast_radius: 1
+dependency_dlq_strategy: separate
+
+# K12 Distillation-Resistenz
+output_feeds_into_training: false
+provenance_required_in_output: true
+non_llm_validation_layer: true
+
+# K13 Independent-Ground-Truth
+external_anchor_type: drive_filesystem
+external_anchor_validation_frequency: per-run
+pre_action_domain_check: true
+pre_action_backup_check: false
+pre_action_blast_radius_check: true
+
+# K14 Human-Override-Decay
+override_complexity: single_command
+override_documentation_freshness_days: 30
+martin_review_cadence: monthly
+bus_factor_handover_drilled: false
+
+# K15 Entropy-Budget
+entropy_added_loc_estimate: 800
+entropy_added_concepts:
+  - chapter-generator-stub
+  - outline-manager-fixed
+  - style-guide-kaestner
+entropy_justified_by_rho: high
+entropy_subtractive_potential: false
+
+# K16 Concurrent-Spawn-Mutex
+concurrent_spawn_protection: both
+lock_dir: /tmp/df-symbiotic-minds-writer.lock
+lock_stale_age_h: 6
+engine_pgrep_check: true
+lock_release_on: EXIT_INT_TERM
+
+# K11.b Pipeline-Cost-Estimate
+pipeline_cost_estimate_required: true
+cost_estimate_method: static_pre_run
+quota_budget_ceiling: 5  # max 5 chapter-generations per run
+cost_overrun_action: warn
+
+# Lose-Coupling (LC1-LC5)
+lose_coupling:
+  LC1_graceful_degradation:
+    degradation_modes:
+      - full              # Real-LLM via ENV-Var
+      - degraded_no_llm   # Mock-Chapter only
+      - sandbox_mock      # Test-Mode
+    degradation_test_required: true
+  LC2_direct_mode:
+    direct_mode_available: true
+    direct_mode_capability: 0.5
+    direct_mode_trigger: "real-llm-api unreachable >60s OR ENV not set"
+  LC3_circuit_breaker:
+    circuit_breaker_timeout_s: 60
+    circuit_breaker_open_threshold: 3
+    circuit_breaker_half_open_test_interval_s: 600
+  LC4_failure_isolation:
+    state_externalization: true
+    idempotent_operations: true
+    dependency_dlq_separate: true
+  LC5_health_check:
+    health_check_dependencies: []
+    health_check_degraded_score: 0.5
+    health_check_endpoint_or_file: "branch-hub/state/df-symbiotic-minds-writer-health.json"
+
+# ENV-Var-Gates
+env_vars:
+  DF_BOOK_REAL_ENABLED:
+    default: "false"
+    activation: "phronesis_ticket_required"
+  PHRONESIS_TICKET:
+    default: ""
+    required_when: "DF_BOOK_REAL_ENABLED=true"
+
+# Buch-spezifika
+book_metadata:
+  title: "Symbiotic Minds"
+  subtitle: "Mensch-AI-Symbiose"
+  chapters_count: 14
+  style_guide: kaestner_dyslexia_friendly
+  target_words_per_chapter: 8000

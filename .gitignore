@@ -1,0 +1,29 @@
+# Runtime-State (per dark-factories-publish skill exclusion list)
+runs/
+output/
+learnings/
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+STOP.flag
+*.lock
+.pytest_cache/
+
+# Secrets
+*.env
+*.key
+secret_*
+
+# Generated chapters (Mock + Real)
+chapters/output/
+chapters/draft/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Mac
+.DS_Store
