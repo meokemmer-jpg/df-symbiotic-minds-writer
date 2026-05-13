@@ -7,6 +7,22 @@ k0_touch: false
 q0_touch: false
 phronesis_required: false
 
+# === Default-Action (per ausreden-schutz.md Schicht 2, Welle-47 Migration Batch-1) ===
+default_action:
+  description: "Chapter-Generation fuer 'Symbiotic Minds' (14 Kapitel, ~8000 Worte/Kapitel, Kaestner-Dyslexia-Friendly Style) + Outline-Manager + Style-Guide-Validation"
+  rho_per_run_eur: 30
+  rho_validation_source: unvalidated
+  block_gates:
+    - gate_id: K15
+      block_reason: "Pipeline-Cost-Estimate Pflicht: max 5 chapter-generations pro Run (quota_budget_ceiling)"
+      false_block_cost_eur: 20
+      legitimate_block_condition: "Quota-Budget ueberschritten ODER Pipeline-Cost-Estimate fehlt"
+    - gate_id: K16
+      block_reason: "Concurrent-Spawn-Protection: lock-dir /tmp/df-symbiotic-minds-writer.lock"
+      false_block_cost_eur: 10
+      legitimate_block_condition: "Lock-File juenger als 6h existiert + andere PID via pgrep"
+  graceful_degradation_path: "Mock-Chapter-Mode bei DF_BOOK_REAL_ENABLED=false ODER real-llm-api unreachable >60s - Outline-Manager + Style-Guide bleiben aktiv"
+
 # K11 Cascade-Containment
 cascade_isolation: hard
 failure_blast_radius: 1
