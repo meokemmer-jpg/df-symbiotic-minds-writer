@@ -1,0 +1,12 @@
+{
+  "df": "df-symbiotic-minds-writer",
+  "ts": "2026-06-09T02:16:35.417482+00:00",
+  "has_src": true,
+  "parse_ok": true,
+  "has_tests": true,
+  "test_ran": true,
+  "tests_passed": false,
+  "code_hash": "71ed62afb3d80c36",
+  "python": "3.14.4",
+  "crux": "[CRUX-MK]"
+}
