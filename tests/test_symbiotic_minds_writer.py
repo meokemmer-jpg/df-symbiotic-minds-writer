@@ -1,315 +1,313 @@
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 # [CRUX-MK]
-import os
-import pytest
 from symbiotic_minds_writer import (
-    CHAPTER_OUTLINE,
-    ChapterDraft,
-    audit_log_entry,
-    generate_book_skeleton,
+    get_chapter_spec,
     generate_chapter_draft,
-    get_chapter_info,
-    is_real_mode_enabled,
-    validate_kaestner_style,
-    write_chapter_to_file,
+    check_kaestner_style,
+    get_book_toc,
+    generate_all_stubs,
+    CHAPTER_REGISTRY,
+    ChapterDraft,
+    StyleCheckResult,
 )
 
-
-# --- Outline ---
-
-def test_outline_has_14_chapters():
-    assert len(CHAPTER_OUTLINE) == 14
+import os
+import pytest
 
 
-def test_outline_ids_sequential():
-    ids = [c["id"] for c in CHAPTER_OUTLINE]
-    assert ids == list(range(1, 15))
+# --- Registry ---
+
+def test_chapter_registry_has_14_chapters():
+    assert len(CHAPTER_REGISTRY) == 14
 
 
-def test_outline_required_fields():
-    required = {"id", "title", "subtitle", "core_thesis", "key_concepts", "approx_words"}
-    for chapter in CHAPTER_OUTLINE:
-        missing = required - set(chapter.keys())
-        assert not missing, f"Kapitel {chapter['id']} fehlt Felder: {missing}"
+def test_chapter_registry_ids_are_1_to_14():
+    assert set(CHAPTER_REGISTRY.keys()) == set(range(1, 15))
 
 
-def test_outline_titles_unique():
-    titles = [c["title"] for c in CHAPTER_OUTLINE]
-    assert len(titles) == len(set(titles))
+def test_chapter_registry_required_fields():
+    required = {"title", "subtitle", "core_thesis", "keywords", "target_words"}
+    for cid, spec in CHAPTER_REGISTRY.items():
+        missing = required - set(spec.keys())
+        assert not missing, f"Kapitel {cid}: Felder fehlen: {missing}"
 
 
-def test_outline_key_concepts_nonempty():
-    for chapter in CHAPTER_OUTLINE:
-        assert chapter["key_concepts"], f"Kapitel {chapter['id']}: key_concepts leer"
+def test_chapter_registry_target_words_positive():
+    for cid, spec in CHAPTER_REGISTRY.items():
+        assert spec["target_words"] > 0, f"Kapitel {cid}: target_words muss > 0 sein"
 
 
-# --- get_chapter_info ---
+# --- get_chapter_spec ---
 
-def test_get_chapter_info_chapter_1():
-    info = get_chapter_info(1)
-    assert info["id"] == 1
-    assert "symbiotisch" in info["title"].lower()
-
-
-def test_get_chapter_info_chapter_14():
-    info = get_chapter_info(14)
-    assert info["id"] == 14
-    assert "ausblick" in info["title"].lower()
+def test_get_chapter_spec_returns_chapter_id():
+    spec = get_chapter_spec(1)
+    assert spec["chapter_id"] == 1
 
 
-def test_get_chapter_info_invalid_raises():
-    with pytest.raises(ValueError, match="15"):
-        get_chapter_info(15)
+def test_get_chapter_spec_all_chapters_accessible():
+    for i in range(1, 15):
+        spec = get_chapter_spec(i)
+        assert spec["chapter_id"] == i
+        assert spec["title"]
 
 
-def test_get_chapter_info_zero_raises():
-    with pytest.raises(ValueError, match="0"):
-        get_chapter_info(0)
+def test_get_chapter_spec_invalid_zero_raises():
+    with pytest.raises(ValueError, match="unbekannt"):
+        get_chapter_spec(0)
 
 
-# --- ENV-Var Gate ---
-
-def test_real_mode_disabled_by_default():
-    os.environ.pop("DF_BOOK_REAL_ENABLED", None)
-    assert not is_real_mode_enabled()
+def test_get_chapter_spec_invalid_15_raises():
+    with pytest.raises(ValueError):
+        get_chapter_spec(15)
 
 
-def test_real_mode_enabled_only_for_exact_true():
-    os.environ["DF_BOOK_REAL_ENABLED"] = "true"
-    assert is_real_mode_enabled()
-    os.environ.pop("DF_BOOK_REAL_ENABLED")
+def test_get_chapter_spec_invalid_negative_raises():
+    with pytest.raises(ValueError):
+        get_chapter_spec(-1)
 
 
-@pytest.mark.parametrize("val", ["1", "yes", "True", "TRUE", "on", "false", ""])
-def test_real_mode_not_enabled_for_other_values(val):
-    os.environ["DF_BOOK_REAL_ENABLED"] = val
-    assert not is_real_mode_enabled()
-    os.environ.pop("DF_BOOK_REAL_ENABLED")
+# --- generate_chapter_draft: Mock-Default ---
 
-
-# --- generate_chapter_draft (Mock) ---
-
-def test_draft_mock_default_source():
-    os.environ.pop("DF_BOOK_REAL_ENABLED", None)
+def test_mock_default_when_no_env(monkeypatch):
+    monkeypatch.delenv("DF_BOOK_REAL_ENABLED", raising=False)
     draft = generate_chapter_draft(1)
     assert draft.source == "mock"
 
 
-def test_draft_mock_no_phronesis_ticket():
-    os.environ.pop("DF_BOOK_REAL_ENABLED", None)
-    draft = generate_chapter_draft(1)
-    assert draft.phronesis_ticket is None
+def test_explicit_mock_returns_mock():
+    draft = generate_chapter_draft(4, backend="mock")
+    assert draft.source == "mock"
 
 
-def test_draft_mock_contains_stub_marker():
-    os.environ.pop("DF_BOOK_REAL_ENABLED", None)
-    draft = generate_chapter_draft(4)
-    assert "MOCK-STUB" in draft.content
+def test_mock_draft_is_chapter_draft_instance():
+    draft = generate_chapter_draft(2, backend="mock")
+    assert isinstance(draft, ChapterDraft)
 
 
-def test_draft_chapter_id_correct():
+def test_mock_draft_has_correct_chapter_id():
     for cid in [1, 7, 14]:
-        draft = generate_chapter_draft(cid)
+        draft = generate_chapter_draft(cid, backend="mock")
         assert draft.chapter_id == cid
 
 
-def test_draft_has_title_and_subtitle():
-    draft = generate_chapter_draft(2)
-    assert draft.title
-    assert draft.subtitle
+def test_mock_draft_has_title():
+    draft = generate_chapter_draft(3, backend="mock")
+    assert draft.title == CHAPTER_REGISTRY[3]["title"]
 
 
-def test_draft_word_count_positive():
-    draft = generate_chapter_draft(3)
+def test_mock_draft_source_is_valid_string():
+    draft = generate_chapter_draft(5, backend="mock")
+    assert draft.source in ("mock", "real-llm", "stub")
+
+
+def test_mock_draft_content_not_empty():
+    draft = generate_chapter_draft(6, backend="mock")
+    assert len(draft.content) > 0
+
+
+def test_mock_draft_word_count_positive():
+    draft = generate_chapter_draft(8, backend="mock")
     assert draft.word_count > 0
 
 
-def test_draft_style_issues_is_list():
-    draft = generate_chapter_draft(5)
-    assert isinstance(draft.style_issues, list)
+def test_mock_draft_has_iso_timestamp():
+    draft = generate_chapter_draft(9, backend="mock")
+    assert "T" in draft.iso_timestamp
+    # UTC offset or Z
+    assert "+" in draft.iso_timestamp or "Z" in draft.iso_timestamp
 
 
-def test_draft_iso_timestamp_present():
-    draft = generate_chapter_draft(6)
-    assert draft.iso_timestamp
-    assert "T" in draft.iso_timestamp  # ISO 8601 format
+def test_mock_draft_phronesis_ticket_is_none():
+    draft = generate_chapter_draft(10, backend="mock")
+    assert draft.phronesis_ticket is None
 
 
-# --- generate_chapter_draft (Real-Mode) ---
-
-def test_real_mode_without_ticket_raises():
-    os.environ["DF_BOOK_REAL_ENABLED"] = "true"
-    os.environ.pop("PHRONESIS_TICKET", None)
-    try:
-        with pytest.raises(RuntimeError, match="PHRONESIS_TICKET"):
-            generate_chapter_draft(1)
-    finally:
-        os.environ.pop("DF_BOOK_REAL_ENABLED", None)
+def test_mock_draft_content_hash_set():
+    draft = generate_chapter_draft(11, backend="mock")
+    assert draft.content_hash
+    assert len(draft.content_hash) == 16
 
 
-def test_real_mode_with_ticket_sets_source():
-    os.environ["DF_BOOK_REAL_ENABLED"] = "true"
-    os.environ["PHRONESIS_TICKET"] = "PT-TEST-001"
-    try:
-        draft = generate_chapter_draft(1)
-        assert draft.source == "real-llm"
-    finally:
-        os.environ.pop("DF_BOOK_REAL_ENABLED", None)
-        os.environ.pop("PHRONESIS_TICKET", None)
+def test_mock_draft_content_includes_chapter_number():
+    for cid in range(1, 15):
+        draft = generate_chapter_draft(cid, backend="mock")
+        assert str(cid) in draft.content
 
 
-def test_real_mode_with_ticket_records_ticket():
-    os.environ["DF_BOOK_REAL_ENABLED"] = "true"
-    os.environ["PHRONESIS_TICKET"] = "PT-TEST-002"
-    try:
-        draft = generate_chapter_draft(2)
-        assert draft.phronesis_ticket == "PT-TEST-002"
-    finally:
-        os.environ.pop("DF_BOOK_REAL_ENABLED", None)
-        os.environ.pop("PHRONESIS_TICKET", None)
+def test_mock_draft_content_includes_crux_marker():
+    draft = generate_chapter_draft(1, backend="mock")
+    assert "CRUX-MK" in draft.content
 
 
-# --- generate_book_skeleton ---
-
-def test_skeleton_has_14_drafts():
-    os.environ.pop("DF_BOOK_REAL_ENABLED", None)
-    skeleton = generate_book_skeleton()
-    assert len(skeleton) == 14
+def test_mock_draft_style_warnings_is_list():
+    draft = generate_chapter_draft(12, backend="mock")
+    assert isinstance(draft.style_warnings, list)
 
 
-def test_skeleton_all_ids_present():
-    os.environ.pop("DF_BOOK_REAL_ENABLED", None)
-    skeleton = generate_book_skeleton()
-    assert [d.chapter_id for d in skeleton] == list(range(1, 15))
+# --- ENV-Var Gate ---
 
-
-def test_skeleton_all_mock_source():
-    os.environ.pop("DF_BOOK_REAL_ENABLED", None)
-    for draft in generate_book_skeleton():
-        assert draft.source == "mock"
-
-
-# --- validate_kaestner_style ---
-
-def test_style_clean_text_no_issues():
-    text = (
-        "AI erkennt Muster. Menschen entscheiden.\n\n"
-        "Das ist der Kern der Symbiose. Beide brauchen einander.\n\n"
-        "Kein Wettbewerb. Keine Hierarchie. Nur Partnerschaft."
-    )
-    assert validate_kaestner_style(text) == []
-
-
-def test_style_empty_content_reported():
-    issues = validate_kaestner_style("")
-    assert len(issues) > 0
-    assert any("leer" in i.lower() for i in issues)
-
-
-def test_style_whitespace_only_reported():
-    issues = validate_kaestner_style("   \n  ")
-    assert len(issues) > 0
-
-
-def test_style_long_sentence_detected():
-    long = "Dies ist " + " ".join(["ein weiteres Wort"] * 20) + "."
-    issues = validate_kaestner_style(long)
-    assert any("lang" in i.lower() or "woerter" in i.lower() for i in issues)
-
-
-def test_style_long_paragraph_detected():
-    # 200 words in one paragraph
-    long_para = " ".join(["Wort"] * 200)
-    issues = validate_kaestner_style(long_para)
-    assert any("absaetz" in i.lower() or "absatz" in i.lower() for i in issues)
-
-
-def test_style_excessive_passive_detected():
-    passive_text = " ".join(["Es wurde gemacht."] * 10)
-    issues = validate_kaestner_style(passive_text)
-    assert any("passiv" in i.lower() for i in issues)
-
-
-# --- ChapterDraft.to_dict ---
-
-def test_to_dict_has_required_keys():
-    draft = generate_chapter_draft(8)
-    d = draft.to_dict()
-    for key in ("chapter_id", "title", "subtitle", "content", "source",
-                "iso_timestamp", "word_count", "style_issues", "phronesis_ticket"):
-        assert key in d
-
-
-def test_to_dict_chapter_id_matches():
-    draft = generate_chapter_draft(9)
-    assert draft.to_dict()["chapter_id"] == 9
-
-
-def test_to_dict_source_is_mock():
-    os.environ.pop("DF_BOOK_REAL_ENABLED", None)
-    assert generate_chapter_draft(10).to_dict()["source"] == "mock"
-
-
-# --- audit_log_entry ---
-
-def test_audit_log_required_keys():
-    draft = generate_chapter_draft(11)
-    log = audit_log_entry(draft)
-    for key in ("ts", "df", "action", "chapter_id", "source", "word_count",
-                "style_issues_count", "phronesis_ticket"):
-        assert key in log
-
-
-def test_audit_log_df_name():
-    draft = generate_chapter_draft(12)
-    assert audit_log_entry(draft)["df"] == "df-symbiotic-minds-writer"
-
-
-def test_audit_log_chapter_id_correct():
-    draft = generate_chapter_draft(13)
-    assert audit_log_entry(draft)["chapter_id"] == 13
-
-
-def test_audit_log_default_action():
-    draft = generate_chapter_draft(14)
-    assert audit_log_entry(draft)["action"] == "GENERATE"
-
-
-def test_audit_log_custom_action():
-    draft = generate_chapter_draft(1)
-    assert audit_log_entry(draft, action="REVIEW")["action"] == "REVIEW"
-
-
-def test_audit_log_mock_no_ticket():
-    os.environ.pop("DF_BOOK_REAL_ENABLED", None)
+def test_env_false_yields_mock(monkeypatch):
+    monkeypatch.setenv("DF_BOOK_REAL_ENABLED", "false")
     draft = generate_chapter_draft(2)
-    assert audit_log_entry(draft)["phronesis_ticket"] is None
+    assert draft.source == "mock"
 
 
-# --- write_chapter_to_file ---
-
-def test_write_creates_file(tmp_path):
-    draft = generate_chapter_draft(1)
-    out = write_chapter_to_file(draft, output_dir=str(tmp_path))
-    assert out.exists()
-
-
-def test_write_file_contains_frontmatter(tmp_path):
-    draft = generate_chapter_draft(3)
-    out = write_chapter_to_file(draft, output_dir=str(tmp_path))
-    text = out.read_text(encoding="utf-8")
-    assert "crux-mk: true" in text
-    assert "chapter_id:" in text
+def test_env_truthy_variants_do_not_activate(monkeypatch):
+    """Nur exakter String 'true' aktiviert Real-Modus."""
+    for non_true in ("1", "yes", "True", "TRUE", "on", "enabled"):
+        monkeypatch.setenv("DF_BOOK_REAL_ENABLED", non_true)
+        draft = generate_chapter_draft(3)
+        assert draft.source == "mock", f"'{non_true}' darf Real-Modus nicht aktivieren"
 
 
-def test_write_file_contains_content(tmp_path):
+def test_env_true_without_ticket_falls_back_to_mock(monkeypatch):
+    monkeypatch.setenv("DF_BOOK_REAL_ENABLED", "true")
+    monkeypatch.delenv("PHRONESIS_TICKET", raising=False)
     draft = generate_chapter_draft(4)
-    out = write_chapter_to_file(draft, output_dir=str(tmp_path))
-    assert "MOCK-STUB" in out.read_text(encoding="utf-8")
+    assert draft.source == "mock"
 
 
-def test_write_filename_contains_chapter_id(tmp_path):
-    draft = generate_chapter_draft(5)
-    out = write_chapter_to_file(draft, output_dir=str(tmp_path))
-    assert "05" in out.name
+# --- Real-LLM backend: Phronesis-Gate ---
+
+def test_real_llm_without_ticket_falls_back_to_mock(monkeypatch):
+    monkeypatch.delenv("PHRONESIS_TICKET", raising=False)
+    draft = generate_chapter_draft(7, backend="real-llm", phronesis_ticket=None)
+    assert draft.source == "mock"
+
+
+def test_real_llm_without_ticket_has_phronesis_warning(monkeypatch):
+    monkeypatch.delenv("PHRONESIS_TICKET", raising=False)
+    draft = generate_chapter_draft(7, backend="real-llm", phronesis_ticket=None)
+    assert any("PHRONESIS_TICKET" in w for w in draft.style_warnings)
+
+
+def test_real_llm_with_explicit_ticket_returns_stub():
+    draft = generate_chapter_draft(8, backend="real-llm", phronesis_ticket="PT-TEST-001")
+    assert draft.source in ("stub", "real-llm")
+    assert draft.phronesis_ticket == "PT-TEST-001"
+
+
+def test_real_llm_with_env_ticket(monkeypatch):
+    monkeypatch.setenv("PHRONESIS_TICKET", "PT-ENV-002")
+    draft = generate_chapter_draft(9, backend="real-llm")
+    assert draft.phronesis_ticket == "PT-ENV-002"
+    assert draft.source in ("stub", "real-llm")
+
+
+def test_explicit_ticket_overrides_env_ticket(monkeypatch):
+    monkeypatch.setenv("PHRONESIS_TICKET", "PT-ENV-003")
+    draft = generate_chapter_draft(10, backend="real-llm", phronesis_ticket="PT-EXPLICIT-004")
+    assert draft.phronesis_ticket == "PT-EXPLICIT-004"
+
+
+# --- check_kaestner_style ---
+
+def test_kaestner_style_clean_text_passes():
+    text = "KI erkennt Muster. Menschen entscheiden. Diese Arbeitsteilung funktioniert."
+    result = check_kaestner_style(text)
+    assert isinstance(result, StyleCheckResult)
+    assert result.word_count > 0
+    assert result.avg_sentence_length < 20
+
+
+def test_kaestner_style_floskel_triggers_warning():
+    text = "Grundsaetzlich ist die Symbiose sozusagen ein wichtiger Prozess."
+    result = check_kaestner_style(text)
+    assert not result.passed
+    assert any("Floskel" in w for w in result.warnings)
+
+
+def test_kaestner_style_long_sentences_triggers_warning():
+    sentence = " ".join(["Wort"] * 30)
+    text = f"{sentence}. {sentence}."
+    result = check_kaestner_style(text)
+    assert any("Satzlaenge" in w for w in result.warnings)
+
+
+def test_kaestner_style_empty_text_fails():
+    result = check_kaestner_style("")
+    assert not result.passed
+    assert result.word_count == 0
+
+
+def test_kaestner_style_short_text_warns():
+    result = check_kaestner_style("Kurz.")
+    assert any("kurz" in w.lower() or "Stub" in w for w in result.warnings)
+
+
+def test_kaestner_style_word_count_correct():
+    text = "Eins zwei drei. Vier fuenf."
+    result = check_kaestner_style(text)
+    assert result.word_count == 5
+
+
+def test_kaestner_style_avg_sentence_length():
+    # 4 words + 2 words = avg 3.0
+    text = "Eins zwei drei vier. Fuenf sechs."
+    result = check_kaestner_style(text)
+    assert abs(result.avg_sentence_length - 3.0) < 0.1
+
+
+# --- get_book_toc ---
+
+def test_toc_has_14_entries():
+    toc = get_book_toc()
+    assert len(toc) == 14
+
+
+def test_toc_is_ordered():
+    toc = get_book_toc()
+    ids = [e["chapter_id"] for e in toc]
+    assert ids == list(range(1, 15))
+
+
+def test_toc_entries_have_required_fields():
+    toc = get_book_toc()
+    for entry in toc:
+        assert "chapter_id" in entry
+        assert "title" in entry
+        assert "subtitle" in entry
+        assert "target_words" in entry
+
+
+def test_toc_first_chapter():
+    toc = get_book_toc()
+    assert toc[0]["chapter_id"] == 1
+
+
+def test_toc_last_chapter():
+    toc = get_book_toc()
+    assert toc[-1]["chapter_id"] == 14
+
+
+# --- generate_all_stubs ---
+
+def test_all_stubs_returns_14_drafts():
+    drafts = generate_all_stubs()
+    assert len(drafts) == 14
+
+
+def test_all_stubs_all_mock_source():
+    drafts = generate_all_stubs()
+    for d in drafts:
+        assert d.source == "mock"
+
+
+def test_all_stubs_covers_all_chapters():
+    drafts = generate_all_stubs()
+    assert {d.chapter_id for d in drafts} == set(range(1, 15))
+
+
+def test_all_stubs_all_have_content():
+    drafts = generate_all_stubs()
+    for d in drafts:
+        assert d.content
+        assert d.word_count > 0
+
+
+def test_all_stubs_content_hashes_unique():
+    drafts = generate_all_stubs()
+    hashes = [d.content_hash for d in drafts]
+    # Alle Kapitel haben unterschiedliche Inhalte → unterschiedliche Hashes
+    assert len(set(hashes)) == 14
