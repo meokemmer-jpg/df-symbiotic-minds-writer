@@ -1,6 +1,6 @@
 {
   "df": "df-symbiotic-minds-writer",
-  "ts": "2026-07-29T01:57:08.508851+00:00",
+  "ts": "2026-07-29T02:45:02.359150+00:00",
   "crux": "[CRUX-MK]",
   "winner_provider": "incumbent-kept",
   "winner_tests_passed": true,
@@ -23,19 +23,19 @@
       "parse_ok": true,
       "tests_passed": true,
       "n_tests": 3,
-      "n_assert": 12,
-      "coverage_pct": 91.0,
-      "q": 1476.0,
+      "n_assert": 14,
+      "coverage_pct": 94.0,
+      "q": 1493.0,
       "error": null
     },
     {
       "provider": "local",
       "parse_ok": true,
       "tests_passed": true,
-      "n_tests": 3,
-      "n_assert": 3,
-      "coverage_pct": 83.0,
-      "q": 1427.0,
+      "n_tests": 2,
+      "n_assert": 2,
+      "coverage_pct": 87.0,
+      "q": 1443.0,
       "error": null
     }
   ],
