@@ -1,6 +1,6 @@
 {
   "df": "df-symbiotic-minds-writer",
-  "ts": "2026-08-15T02:33:59.248863+00:00",
+  "ts": "2026-08-16T01:57:09.951721+00:00",
   "crux": "[CRUX-MK]",
   "winner_provider": "incumbent-kept",
   "winner_tests_passed": true,
@@ -20,22 +20,22 @@
     },
     {
       "provider": "codex",
-      "parse_ok": false,
-      "tests_passed": false,
-      "n_tests": 0,
-      "n_assert": null,
-      "coverage_pct": null,
-      "q": 0.0,
-      "error": "[codex-Fehler: Command '['codex', 'exec', '--skip-git-repo-check', '-m', 'gpt-5.4']' timed out after 220 seconds]"
+      "parse_ok": true,
+      "tests_passed": true,
+      "n_tests": 5,
+      "n_assert": 16,
+      "coverage_pct": 95.0,
+      "q": 1506.0,
+      "error": null
     },
     {
       "provider": "local",
       "parse_ok": true,
-      "tests_passed": true,
-      "n_tests": 24,
-      "n_assert": 44,
-      "coverage_pct": 100.0,
-      "q": 1616.0,
+      "tests_passed": false,
+      "n_tests": 12,
+      "n_assert": 22,
+      "coverage_pct": null,
+      "q": 1.0,
       "error": null
     }
   ],
