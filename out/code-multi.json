@@ -1,6 +1,6 @@
 {
   "df": "df-symbiotic-minds-writer",
-  "ts": "2026-09-08T02:43:56.197087+00:00",
+  "ts": "2026-09-09T01:19:23.392901+00:00",
   "crux": "[CRUX-MK]",
   "winner_provider": "incumbent-kept",
   "gate_refused": null,
@@ -31,13 +31,13 @@
     },
     {
       "provider": "local",
-      "parse_ok": false,
-      "tests_passed": false,
-      "n_tests": 0,
-      "n_assert": 0,
-      "coverage_pct": null,
-      "q": null,
-      "error": "module parse: invalid syntax (<unknown>, line 1)"
+      "parse_ok": true,
+      "tests_passed": true,
+      "n_tests": 6,
+      "n_assert": 8,
+      "coverage_pct": 100.0,
+      "q": 1526.0,
+      "error": null
     }
   ],
   "canonical_verify": {
