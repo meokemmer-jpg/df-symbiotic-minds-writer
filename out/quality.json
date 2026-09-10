@@ -1,10 +1,10 @@
 {
   "df": "df-symbiotic-minds-writer",
-  "ts": "2026-09-10T00:28:42.027838+00:00",
+  "ts": "2026-09-10T03:23:17.032175+00:00",
   "maturity": "CODE",
   "maturity_level": 3,
   "evidence_grade": 1,
   "grade_basis": "doc-only: kein real gruener Test -> Grade-1 (DRAFT)",
-  "wargame_verdict": "CONDITIONAL",
+  "wargame_verdict": null,
   "crux": "[CRUX-MK]"
 }
