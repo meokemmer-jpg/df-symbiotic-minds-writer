@@ -1,6 +1,6 @@
 {
   "df": "df-symbiotic-minds-writer",
-  "ts": "2026-09-18T01:41:33.378069+00:00",
+  "ts": "2026-09-19T01:20:42.739129+00:00",
   "crux": "[CRUX-MK]",
   "winner_provider": "incumbent-kept",
   "gate_refused": null,
@@ -31,13 +31,13 @@
     },
     {
       "provider": "local",
-      "parse_ok": false,
+      "parse_ok": true,
       "tests_passed": false,
-      "n_tests": 0,
-      "n_assert": 0,
+      "n_tests": 12,
+      "n_assert": 23,
       "coverage_pct": null,
-      "q": null,
-      "error": "module parse: unterminated f-string literal (detected at line 135) (<unknown>, line 135)"
+      "q": 1.0,
+      "error": null
     }
   ],
   "canonical_verify": {
