@@ -1,6 +1,6 @@
 {
   "df": "df-symbiotic-minds-writer",
-  "ts": "2026-10-07T01:33:10.063840+00:00",
+  "ts": "2026-10-07T22:27:23.150270+00:00",
   "crux": "[CRUX-MK]",
   "winner_provider": "incumbent-kept",
   "gate_refused": null,
@@ -32,11 +32,11 @@
     {
       "provider": "local",
       "parse_ok": true,
-      "tests_passed": false,
-      "n_tests": 11,
-      "n_assert": 13,
-      "coverage_pct": null,
-      "q": 1.0,
+      "tests_passed": true,
+      "n_tests": 23,
+      "n_assert": 53,
+      "coverage_pct": 94.0,
+      "q": 1592.0,
       "error": null
     }
   ],
